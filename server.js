@@ -4,14 +4,17 @@ import { Server } from "socket.io";
 import cors from "cors";
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+}));
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
     origin: "*",
-  },
+  }
 });
 
 const ROOM = "secret-room";
@@ -19,28 +22,28 @@ const ROOM = "secret-room";
 io.on("connection", (socket) => {
   console.log("Connected:", socket.id);
 
-  socket.join(ROOM);
+  socket.join("secret-room");
 
   socket.on("card_click", (data) => {
-    if (!data?.message) return;
+    console.log("Received:", data);
 
-    console.log("Message:", data.message);
-
-    socket.to(ROOM).emit("show_popup", {
-      message: data.message,
-    });
+    // If custom message
+    if (typeof data === "object" && data.message) {
+      socket.to("secret-room").emit("show_popup", {
+        message: data.message,
+      });
+    } 
+    // If normal card index
+    else {
+      socket.to("secret-room").emit("show_popup", data);
+    }
   });
-
-  socket.on("disconnect", () => {
-    console.log("Disconnected:", socket.id);
-  });
-});
-
-app.get("/", (req, res) => {
+});app.get("/", (req, res) => {
   res.send("Server running");
 });
 
 const PORT = process.env.PORT || 5000;
+
 server.listen(PORT, () => {
   console.log("Running on port", PORT);
 });
