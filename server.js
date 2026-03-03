@@ -5,7 +5,9 @@ import cors from "cors";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+}));
 
 const server = http.createServer(app);
 
@@ -15,15 +17,19 @@ const io = new Server(server, {
   }
 });
 
-const ROOM_ID = "secret-room-1";
+const ROOM = "secret-room";
 
 io.on("connection", (socket) => {
   console.log("Connected:", socket.id);
 
-  socket.join(ROOM_ID);
+  // Join same room
+  socket.join(ROOM);
 
   socket.on("card_click", (index) => {
-    socket.to(ROOM_ID).emit("show_popup", index);
+    console.log("Card clicked:", index);
+
+    // Send to everyone in room EXCEPT sender
+    socket.to(ROOM).emit("show_popup", index);
   });
 
   socket.on("disconnect", () => {
@@ -35,7 +41,7 @@ app.get("/", (req, res) => {
   res.send("Server running");
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log("Running on port", PORT);
