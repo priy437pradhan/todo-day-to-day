@@ -30,7 +30,16 @@ webpush.setVapidDetails(
 let subscriptions = [];
 
 app.post("/subscribe", (req, res) => {
-  subscriptions.push(req.body);
+  const sub = req.body;
+
+  const exists = subscriptions.find(
+    s => s.endpoint === sub.endpoint
+  );
+
+  if (!exists) {
+    subscriptions.push(sub);
+  }
+
   res.status(201).json({});
 });
 
@@ -42,8 +51,12 @@ function sendPush(message) {
     message
   });
 
-  subscriptions.forEach((sub) => {
-    webpush.sendNotification(sub, payload).catch(console.error);
+  subscriptions.forEach((sub, index) => {
+    webpush.sendNotification(sub, payload)
+      .catch(err => {
+        console.log("Removing invalid subscription");
+        subscriptions.splice(index, 1);
+      });
   });
 }
 
