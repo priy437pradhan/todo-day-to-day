@@ -46,35 +46,41 @@ app.post("/subscribe", (req, res) => {
 /* ================= SEND PUSH ================= */
 
 function sendPush(message) {
+
   const payload = JSON.stringify({
     title: "GitHub Notification",
     message
   });
 
   subscriptions.forEach((sub, index) => {
+
     webpush.sendNotification(sub, payload)
-      .catch(err => {
-        console.log("Removing invalid subscription");
+      .catch(() => {
         subscriptions.splice(index, 1);
       });
+
   });
+
 }
 
 /* ================= SOCKET ================= */
 
 io.on("connection", (socket) => {
+
   console.log("Connected:", socket.id);
 
   socket.join(ROOM);
 
   socket.on("card_click", (data) => {
+
     const message = data.message || data;
 
     socket.to(ROOM).emit("show_popup", { message });
 
-    /* PUSH NOTIFICATION */
     sendPush(message);
+
   });
+
 });
 
 app.get("/", (req, res) => {
